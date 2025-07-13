@@ -4,12 +4,24 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getSongs, addToFavorites } from '@/utils/api';
 
+interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  genre: string;
+  image: string;
+  audioUrl: string;
+  lyrics: string;
+  mood: string;
+  favorite: boolean;
+}
+
 export default function SongDetailPage() {
   const params = useParams();
-  const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const router = useRouter();
+  const id = typeof params?.id === 'string' ? params.id : Array.isArray(params?.id) ? params.id[0] : '';
 
-  const [song, setSong] = useState<any>(null);
+  const [song, setSong] = useState<Song | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
@@ -19,11 +31,14 @@ export default function SongDetailPage() {
   const fetchSong = async () => {
     try {
       const data = await getSongs();
-      const selected = data.find((s: any) => s.id === id);
+      const songsArray = Array.isArray(data) ? data : [];
+      const selected = songsArray.find((s: any) => s.id === id);
       if (selected) {
         setSong(selected);
-        const favorites = JSON.parse(sessionStorage.getItem('favorites') || '[]');
-        setIsFavorited(favorites.includes(selected.id));
+        if (typeof window !== 'undefined') {
+          const favorites = JSON.parse(sessionStorage.getItem('favorites') || '[]');
+          setIsFavorited(favorites.includes(selected.id));
+        }
       }
     } catch (err) {
       console.error('Gagal mengambil lagu:', err);
@@ -31,7 +46,8 @@ export default function SongDetailPage() {
   };
 
   const toggleFavorite = async () => {
-    if (!song) return;
+    if (!song || typeof window === 'undefined') return;
+
     let updatedFavorites: string[] = JSON.parse(sessionStorage.getItem('favorites') || '[]');
     if (isFavorited) {
       updatedFavorites = updatedFavorites.filter((fid) => fid !== song.id);
@@ -88,7 +104,7 @@ export default function SongDetailPage() {
           <p style={{ fontSize: '16px', color: '#ccc', marginBottom: '4px' }}>{song.artist}</p>
           <p style={{ fontSize: '14px', color: '#999', marginBottom: '4px' }}>Genre: {song.genre || '-'}</p>
           <p style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>
-            Since: {song.since || 'Unknown'}
+            Mood: {song.mood || '-'}
           </p>
 
           <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '12px', marginTop: '10px' }}>

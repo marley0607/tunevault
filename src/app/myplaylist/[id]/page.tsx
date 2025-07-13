@@ -40,7 +40,10 @@ export default function PlaylistDetailPage() {
     try {
       const res = await fetch(`${PLAYLIST_API}/${id}`);
       const data = await res.json();
-      setPlaylist(data);
+      setPlaylist({
+        ...data,
+        songs: Array.isArray(data.songs) ? data.songs : [],
+      });
       setEditName(data.name);
     } catch (err) {
       console.error('Gagal ambil playlist:', err);
@@ -54,14 +57,19 @@ export default function PlaylistDetailPage() {
     await fetch(`${PLAYLIST_API}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...playlist, name: editName }),
+      body: JSON.stringify({
+        ...playlist,
+        name: editName,
+        songs: Array.isArray(playlist.songs) ? playlist.songs : [],
+      }),
     });
     setIsEditingName(false);
     fetchPlaylist(id!);
   };
 
   const handleRemoveSong = async (songId: string | number) => {
-    const updated = playlist.songs.filter((sid: string | number) => sid !== songId);
+    const currentSongs = Array.isArray(playlist.songs) ? playlist.songs : [];
+    const updated = currentSongs.filter((sid: string | number) => sid !== songId);
     await fetch(`${PLAYLIST_API}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -71,8 +79,9 @@ export default function PlaylistDetailPage() {
   };
 
   const handleAddSong = async (songId: string | number) => {
-    if (playlist.songs.includes(songId)) return;
-    const updated = [...playlist.songs, songId];
+    const currentSongs = Array.isArray(playlist.songs) ? playlist.songs : [];
+    if (currentSongs.includes(songId)) return;
+    const updated = [...currentSongs, songId];
     await fetch(`${PLAYLIST_API}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -142,25 +151,28 @@ export default function PlaylistDetailPage() {
               style={searchInputStyle}
             />
             <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '16px' }}>
-              {filteredSongs.map((song) => (
-                <div key={song.id} style={cardStyle}>
-                  <img src={song.image} alt={song.title} style={cardImg} />
-                  <div style={{ fontWeight: 'bold' }}>{song.title}</div>
-                  <div style={{ fontSize: '12px', color: '#ccc' }}>{song.artist}</div>
-                  <button
-                    onClick={() => handleAddSong(song.id)}
-                    disabled={playlist.songs.includes(song.id)}
-                    style={{
-                      ...buttonGreen,
-                      marginTop: '6px',
-                      background: playlist.songs.includes(song.id) ? '#555' : '#1db954',
-                      cursor: playlist.songs.includes(song.id) ? 'not-allowed' : 'pointer',
-                    }}
-                  >
-                    {playlist.songs.includes(song.id) ? '✔ Ditambahkan' : 'Tambah'}
-                  </button>
-                </div>
-              ))}
+              {filteredSongs.map((song) => {
+                const currentSongs = Array.isArray(playlist.songs) ? playlist.songs : [];
+                return (
+                  <div key={song.id} style={cardStyle}>
+                    <img src={song.image} alt={song.title} style={cardImg} />
+                    <div style={{ fontWeight: 'bold' }}>{song.title}</div>
+                    <div style={{ fontSize: '12px', color: '#ccc' }}>{song.artist}</div>
+                    <button
+                      onClick={() => handleAddSong(song.id)}
+                      disabled={currentSongs.includes(song.id)}
+                      style={{
+                        ...buttonGreen,
+                        marginTop: '6px',
+                        background: currentSongs.includes(song.id) ? '#555' : '#1db954',
+                        cursor: currentSongs.includes(song.id) ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {currentSongs.includes(song.id) ? '✔ Ditambahkan' : 'Tambah'}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -177,7 +189,7 @@ export default function PlaylistDetailPage() {
               </tr>
             </thead>
             <tbody>
-              {playlist.songs.map((songId: string | number, index: number) => {
+              {(playlist.songs || []).map((songId: string | number, index: number) => {
                 const song = getSongById(songId);
                 if (!song) return null;
                 return (

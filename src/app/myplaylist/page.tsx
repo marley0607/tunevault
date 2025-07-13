@@ -48,7 +48,7 @@ export default function MyPlaylistPage() {
   const fetchSongs = async () => {
     try {
       const data = await getSongs();
-      const cleaned = data.map((s: any) => ({
+      const cleaned = (Array.isArray(data) ? data : []).map((s: any) => ({
         id: s.id,
         title: s.title || 'Unknown',
         artist: s.artist || 'Unknown',
@@ -69,7 +69,13 @@ export default function MyPlaylistPage() {
     try {
       const res = await fetch(PLAYLIST_API);
       const data = await res.json();
-      setPlaylists(Array.isArray(data) ? data : []);
+      const valid = Array.isArray(data)
+        ? data.map((p: any) => ({
+            ...p,
+            songs: Array.isArray(p.songs) ? p.songs : [],
+          }))
+        : [];
+      setPlaylists(valid);
     } catch (error) {
       console.error('Gagal mengambil playlist:', error);
     }
@@ -196,7 +202,7 @@ export default function MyPlaylistPage() {
       <h2 style={{ fontSize: '20px', marginBottom: '16px' }}>🎵 Playlist Saya</h2>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
         {playlists.map((playlist) => {
-          const thumbs = playlist.songs
+          const thumbs = (playlist.songs || [])
             .slice(0, 4)
             .map((id) => songs.find((s) => s.id === id)?.image)
             .filter(Boolean);

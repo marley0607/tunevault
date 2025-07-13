@@ -1,5 +1,5 @@
 // src/types/song.ts
-export interface Song {
+export interface songs {
   id: string;
   title: string;
   artist: string;
@@ -10,4 +10,10 @@ export interface Song {
   Since: string;
   lyrics: string;
   mood: string;
+}
+
+export interface playlist {
+  id: string;
+  name: string;
+  songs: string[];
 }
