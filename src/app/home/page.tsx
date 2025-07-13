@@ -1,24 +1,11 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSongs } from '@/utils/api';
 import SongCard from '@/components/SongCard';
 import Image from 'next/image';
-
-interface Song {
-  id: string;
-  title: string;
-  artist: string;
-  genre: string;
-  image: string;
-  audioUrl: string;
-  favorite: boolean;
-  Since: string;
-  lyrics: string;
-  mood: string;
-}
-
+import { Song } from '@/types/song';
 
 interface Artist {
   name: string;
@@ -34,6 +21,29 @@ export default function HomePage() {
   const trendingRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  const fetchSongs = useCallback(async () => {
+    try {
+      const data = await getSongs();
+      const cleaned: Song[] = data.map((s: any) => ({
+        id: s.id,
+        title: s.title || 'Unknown',
+        artist: s.artist || 'Unknown',
+        genre: s.genre || 'Unknown',
+        image: s.image || '/default-song.png',
+        audioUrl: s.audioUrl || '',
+        favorite: s.favorite ?? false,
+        Since: s.Since || 'Unknown',
+        lyrics: s.lyrics || '',
+        mood: s.mood || '',
+      }));
+      setSongs(cleaned);
+      const topArtists = getTopArtists(cleaned, 6);
+      setPopularArtists(topArtists);
+    } catch (err) {
+      console.error('Gagal ambil lagu:', err);
+    }
+  }, []);
+
   useEffect(() => {
     const user = localStorage.getItem('user');
     if (!user) {
@@ -42,18 +52,7 @@ export default function HomePage() {
       setUsername(user);
       fetchSongs();
     }
-  }, [router]);
-
-  const fetchSongs = async () => {
-    try {
-      const data: Song[] = await getSongs();
-      setSongs(data);
-      const topArtists = getTopArtists(data, 6);
-      setPopularArtists(topArtists);
-    } catch (err) {
-      console.error('Gagal ambil lagu:', err);
-    }
-  };
+  }, [router, fetchSongs]);
 
   const getTopArtists = (songs: Song[], topN: number): Artist[] => {
     const count: Record<string, Artist> = {};
@@ -69,11 +68,10 @@ export default function HomePage() {
     return Object.values(count).sort((a, b) => b.count - a.count).slice(0, topN);
   };
 
-  const filteredSongs = songs.filter(
-    (song) =>
-      song.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      song.artist?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      song.genre?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSongs = songs.filter((song) =>
+    (song.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (song.artist?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (song.genre?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
   const scroll = (direction: 'left' | 'right') => {
@@ -86,27 +84,8 @@ export default function HomePage() {
   };
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        background: '#121212',
-        color: '#fff',
-        height: '100vh',
-      }}
-    >
-      {/* Header */}
-      <header
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-          padding: '20px 16px',
-          borderBottom: '1px solid #333',
-          background: '#181818',
-        }}
-      >
+    <div style={containerStyle}>
+      <header style={headerStyle}>
         <input
           type="text"
           placeholder="Cari lagu, artis, genre..."
@@ -117,8 +96,7 @@ export default function HomePage() {
         <div style={{ fontSize: '16px' }}>Welcome, {username}</div>
       </header>
 
-      {/* Main Content */}
-      <main style={{ padding: '16px', flex: 1, overflowY: 'auto' }}>
+      <main style={mainStyle}>
         <h2 style={sectionTitle}>🔥 Trending Songs</h2>
         <div style={scrollWrapper}>
           <button onClick={() => scroll('left')} style={scrollBtn}>⬅</button>
@@ -132,7 +110,6 @@ export default function HomePage() {
           <button onClick={() => scroll('right')} style={scrollBtn}>➡</button>
         </div>
 
-        {/* Popular Artists */}
         <div style={{ marginTop: '32px' }}>
           <h2 style={sectionTitle}>🎤 Popular Artists</h2>
           <div style={popularWrapper}>
@@ -159,7 +136,25 @@ export default function HomePage() {
   );
 }
 
-// ===== STYLE =====
+// ========== STYLES ==========
+const containerStyle: React.CSSProperties = {
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  background: '#121212',
+  color: '#fff',
+  height: '100vh',
+};
+
+const headerStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '10px',
+  padding: '20px 16px',
+  borderBottom: '1px solid #333',
+  background: '#181818',
+};
+
 const searchInput: React.CSSProperties = {
   padding: '10px',
   borderRadius: '10px',
@@ -171,6 +166,12 @@ const searchInput: React.CSSProperties = {
   width: '100%',
   maxWidth: '500px',
   boxSizing: 'border-box',
+};
+
+const mainStyle: React.CSSProperties = {
+  padding: '16px',
+  flex: 1,
+  overflowY: 'auto',
 };
 
 const sectionTitle: React.CSSProperties = {

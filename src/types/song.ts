@@ -1,3 +1,4 @@
+// src/types/song.ts
 export interface Song {
   id: string;
   title: string;
@@ -10,4 +11,3 @@ export interface Song {
   lyrics: string;
   mood: string;
 }
-

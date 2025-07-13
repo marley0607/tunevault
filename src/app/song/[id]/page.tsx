@@ -61,16 +61,15 @@ export default function SongDetailPage() {
         paddingTop: '80px',
       }}
     >
-      {/* Container */}
       <div
         style={{
           display: 'flex',
           flexDirection: 'row',
           gap: '32px',
-          flexWrap: 'wrap',
+          flexWrap: 'wrap' as const,
         }}
       >
-        {/* Gambar & Info Lagu */}
+        {/* Info Lagu */}
         <div style={{ flex: '1 1 300px', minWidth: '280px' }}>
           <img
             src={song.image || '/default-artist.png'}
@@ -92,7 +91,7 @@ export default function SongDetailPage() {
             Since: {song.since || 'Unknown'}
           </p>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '10px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '12px', marginTop: '10px' }}>
             <button
               onClick={toggleFavorite}
               style={{
@@ -131,7 +130,7 @@ export default function SongDetailPage() {
           </div>
         </div>
 
-        {/* Lirik */}
+        {/* Lirik Lagu */}
         <div style={{ flex: '2', minWidth: '280px' }}>
           <h2 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '16px', marginTop: '10px' }}>
             Lirik Lagu

@@ -22,7 +22,7 @@ interface Song {
 interface Playlist {
   id: string;
   name: string;
-  songs: string[]; // array of song ids
+  songs: string[]; // array of song IDs
 }
 
 export default function MyPlaylistPage() {
@@ -46,38 +46,71 @@ export default function MyPlaylistPage() {
   }, []);
 
   const fetchSongs = async () => {
-    const data = await getSongs();
-    setSongs(data);
+    try {
+      const data = await getSongs();
+      const cleaned = data.map((s: any) => ({
+        id: s.id,
+        title: s.title || 'Unknown',
+        artist: s.artist || 'Unknown',
+        genre: s.genre || 'Unknown',
+        image: s.image || '/default-song.png',
+        audioUrl: s.audioUrl || '',
+        favorite: s.favorite ?? false,
+        lyrics: s.lyrics || '',
+        mood: s.mood || '',
+      }));
+      setSongs(cleaned);
+    } catch (error) {
+      console.error('Gagal mengambil lagu:', error);
+    }
   };
 
   const fetchPlaylists = async () => {
-    const res = await fetch(PLAYLIST_API);
-    const data = await res.json();
-    setPlaylists(Array.isArray(data) ? data : []);
+    try {
+      const res = await fetch(PLAYLIST_API);
+      const data = await res.json();
+      setPlaylists(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Gagal mengambil playlist:', error);
+    }
   };
 
   const createPlaylist = async () => {
-    if (!newPlaylistName.trim() || selectedSongIds.length === 0) return;
+    if (!newPlaylistName.trim()) {
+      alert('Nama playlist tidak boleh kosong');
+      return;
+    }
+    if (selectedSongIds.length === 0) {
+      alert('Pilih minimal satu lagu untuk membuat playlist');
+      return;
+    }
 
     try {
       const res = await fetch(PLAYLIST_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newPlaylistName, songs: selectedSongIds }),
+        body: JSON.stringify({
+          name: newPlaylistName,
+          songs: selectedSongIds,
+        }),
       });
-      if (!res.ok) throw new Error('Failed to save playlist');
-      await res.json();
+      if (!res.ok) throw new Error('Gagal menyimpan playlist');
+
       setNewPlaylistName('');
       setSelectedSongIds([]);
       fetchPlaylists();
     } catch (error) {
-      console.error('Error saving playlist:', error);
+      console.error('Gagal membuat playlist:', error);
     }
   };
 
   const deletePlaylist = async (id: string) => {
-    await fetch(`${PLAYLIST_API}/${id}`, { method: 'DELETE' });
-    fetchPlaylists();
+    try {
+      await fetch(`${PLAYLIST_API}/${id}`, { method: 'DELETE' });
+      fetchPlaylists();
+    } catch (error) {
+      console.error('Gagal menghapus playlist:', error);
+    }
   };
 
   const toggleSongSelection = (id: string) => {
@@ -86,10 +119,11 @@ export default function MyPlaylistPage() {
     );
   };
 
-  const filteredSongs = songs.filter((song) =>
-    song.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    song.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    song.genre.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSongs = songs.filter(
+    (song) =>
+      song.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      song.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      song.genre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (!isAuthenticated) return null;
@@ -104,10 +138,12 @@ export default function MyPlaylistPage() {
         paddingTop: '90px',
       }}
     >
-      <h1 style={{ fontSize: '26px', fontWeight: 'bold', marginBottom: '20px' }}>🎧 My Playlist</h1>
+      <h1 style={{ fontSize: '26px', fontWeight: 'bold', marginBottom: '20px' }}>
+        🎧 My Playlist
+      </h1>
 
-      {/* Buat Playlist Baru */}
-      <div style={{ background: '#1c1c1c', padding: '20px', borderRadius: '12px', marginBottom: '30px' }}>
+      {/* Form buat playlist */}
+      <div style={playlistBoxStyle}>
         <h2 style={{ fontSize: '18px', marginBottom: '10px' }}>🆕 Buat Playlist Baru</h2>
 
         <input
@@ -125,36 +161,27 @@ export default function MyPlaylistPage() {
           style={{ ...inputStyle, marginBottom: '16px' }}
         />
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={songListStyle}>
           {searchTerm &&
             filteredSongs.map((song) => (
               <div
                 key={song.id}
                 onClick={() => toggleSongSelection(song.id)}
                 style={{
-                  width: '100%',
-                  maxWidth: '160px',
-                  borderRadius: '10px',
+                  ...songCardStyle,
                   border: selectedSongIds.includes(song.id)
                     ? '2px solid #1db954'
                     : '1px solid #333',
-                  padding: '10px',
-                  cursor: 'pointer',
-                  background: '#181818',
-                  flexGrow: 1,
                 }}
               >
                 <img
                   src={song.image}
                   alt={song.title}
-                  style={{
-                    width: '100%',
-                    height: '100px',
-                    objectFit: 'cover',
-                    borderRadius: '6px',
-                  }}
+                  style={songImageStyle}
                 />
-                <div style={{ marginTop: '6px', fontSize: '14px', fontWeight: 'bold' }}>{song.title}</div>
+                <div style={{ marginTop: '6px', fontSize: '14px', fontWeight: 'bold' }}>
+                  {song.title}
+                </div>
                 <div style={{ fontSize: '12px', color: '#ccc' }}>{song.artist}</div>
               </div>
             ))}
@@ -171,33 +198,12 @@ export default function MyPlaylistPage() {
         {playlists.map((playlist) => {
           const thumbs = playlist.songs
             .slice(0, 4)
-            .map((id: string) => songs.find((s) => s.id === id)?.image)
+            .map((id) => songs.find((s) => s.id === id)?.image)
             .filter(Boolean);
 
           return (
-            <div
-              key={playlist.id}
-              style={{
-                width: '100%',
-                maxWidth: '260px',
-                background: '#1c1c1c',
-                borderRadius: '10px',
-                padding: '16px',
-                position: 'relative',
-                flexGrow: 1,
-              }}
-            >
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gridTemplateRows: '1fr 1fr',
-                  gap: '4px',
-                  borderRadius: '6px',
-                  overflow: 'hidden',
-                  marginBottom: '12px',
-                }}
-              >
+            <div key={playlist.id} style={playlistCardStyle}>
+              <div style={gridThumbStyle}>
                 {thumbs.length > 0 ? (
                   thumbs.map((img, index) => (
                     <img
@@ -235,6 +241,7 @@ export default function MyPlaylistPage() {
                     border: 'none',
                     borderRadius: '6px',
                     fontSize: '12px',
+                    cursor: 'pointer',
                   }}
                 >
                   Hapus
@@ -248,7 +255,7 @@ export default function MyPlaylistPage() {
   );
 }
 
-// ========== Style ==========
+// ========== Styles ==========
 
 const inputStyle: React.CSSProperties = {
   padding: '10px',
@@ -269,4 +276,54 @@ const saveBtnStyle: React.CSSProperties = {
   color: '#fff',
   fontWeight: 'bold',
   cursor: 'pointer',
+};
+
+const playlistBoxStyle: React.CSSProperties = {
+  background: '#1c1c1c',
+  padding: '20px',
+  borderRadius: '12px',
+  marginBottom: '30px',
+};
+
+const songListStyle: React.CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '12px',
+};
+
+const songCardStyle: React.CSSProperties = {
+  width: '100%',
+  maxWidth: '160px',
+  borderRadius: '10px',
+  padding: '10px',
+  cursor: 'pointer',
+  background: '#181818',
+  flexGrow: 1,
+};
+
+const songImageStyle: React.CSSProperties = {
+  width: '100%',
+  height: '100px',
+  objectFit: 'cover',
+  borderRadius: '6px',
+};
+
+const playlistCardStyle: React.CSSProperties = {
+  width: '100%',
+  maxWidth: '260px',
+  background: '#1c1c1c',
+  borderRadius: '10px',
+  padding: '16px',
+  position: 'relative',
+  flexGrow: 1,
+};
+
+const gridThumbStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gridTemplateRows: '1fr 1fr',
+  gap: '4px',
+  borderRadius: '6px',
+  overflow: 'hidden',
+  marginBottom: '12px',
 };

@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Sidebar from '@/components/Sidebar';
 import { getSongs } from '@/utils/api';
 
 const PLAYLIST_API = 'https://686ffc0546567442480122e2.mockapi.io/playlist';
@@ -100,35 +99,21 @@ export default function PlaylistDetailPage() {
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#121212', color: '#fff' }}>
       <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '60px' }}>
-        {/* Header Playlist */}
-        <div style={{
-          display: 'flex', gap: '20px', padding: '24px', background: '#222',
-          flexWrap: 'wrap', alignItems: 'center'
-        }}>
+        {/* Header */}
+        <div style={headerStyle}>
           <img
             src={getSongById(playlist?.songs?.[0])?.image || '/placeholder.jpg'}
             alt="Playlist"
-            style={{
-              width: '140px',
-              height: '140px',
-              borderRadius: '10px',
-              objectFit: 'cover'
-            }}
+            style={imgStyle}
           />
           <div style={{ flex: 1, minWidth: '250px' }}>
             <p style={{ fontSize: '14px', color: '#ccc' }}>My Playlist</p>
             {isEditingName ? (
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' as const }}>
                 <input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  style={{
-                    padding: '8px',
-                    borderRadius: '6px',
-                    background: '#111',
-                    color: '#fff',
-                    border: '1px solid #444'
-                  }}
+                  style={inputStyle}
                 />
                 <button onClick={handleSaveName} style={buttonGreen}>Save</button>
               </div>
@@ -139,7 +124,7 @@ export default function PlaylistDetailPage() {
             )}
             <p style={{ fontSize: '14px', color: '#aaa' }}>{playlist?.songs?.length || 0} lagu</p>
           </div>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' as const }}>
             <button onClick={() => setIsEditingSongs(!isEditingSongs)} style={buttonOutline}>Edit</button>
             <button onClick={() => setShowAdd(!showAdd)} style={buttonOutline}>Add</button>
             <button onClick={handleBack} style={buttonOutline}>Back</button>
@@ -154,17 +139,9 @@ export default function PlaylistDetailPage() {
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="Cari lagu untuk ditambahkan..."
-              style={{
-                padding: '10px',
-                borderRadius: '8px',
-                background: '#1c1c1c',
-                color: '#fff',
-                width: '100%',
-                marginBottom: '20px',
-                border: 'none'
-              }}
+              style={searchInputStyle}
             />
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '16px' }}>
               {filteredSongs.map((song) => (
                 <div key={song.id} style={cardStyle}>
                   <img src={song.image} alt={song.title} style={cardImg} />
@@ -207,28 +184,15 @@ export default function PlaylistDetailPage() {
                   <tr key={song.id} style={{ borderBottom: '1px solid #222', height: '56px' }}>
                     <td>{index + 1}</td>
                     <td>
-                      <Link
-                        href={`/song/${song.id}`}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          color: '#fff',
-                          textDecoration: 'none'
-                        }}
-                      >
-                        <img
-                          src={song.image}
-                          alt={song.title}
-                          style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover' }}
-                        />
+                      <Link href={`/song/${song.id}`} style={linkStyle}>
+                        <img src={song.image} alt={song.title} style={songImg} />
                         <span style={{ fontWeight: 'bold' }}>{song.title}</span>
                       </Link>
                     </td>
                     <td>{song.artist}</td>
                     {isEditingSongs && (
                       <td>
-                        <button onClick={() => handleRemoveSong(song.id)} style={{ ...buttonRed, fontSize: '12px' }}>
+                        <button onClick={() => handleRemoveSong(song.id)} style={buttonRed}>
                           Hapus
                         </button>
                       </td>
@@ -245,7 +209,56 @@ export default function PlaylistDetailPage() {
 }
 
 // ===== STYLE =====
-const buttonGreen = {
+const headerStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: '20px',
+  padding: '24px',
+  background: '#222',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+};
+
+const imgStyle: React.CSSProperties = {
+  width: '140px',
+  height: '140px',
+  borderRadius: '10px',
+  objectFit: 'cover',
+};
+
+const inputStyle: React.CSSProperties = {
+  padding: '8px',
+  borderRadius: '6px',
+  background: '#111',
+  color: '#fff',
+  border: '1px solid #444',
+};
+
+const searchInputStyle: React.CSSProperties = {
+  padding: '10px',
+  borderRadius: '8px',
+  background: '#1c1c1c',
+  color: '#fff',
+  width: '100%',
+  marginBottom: '20px',
+  border: 'none',
+};
+
+const linkStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+  color: '#fff',
+  textDecoration: 'none',
+};
+
+const songImg: React.CSSProperties = {
+  width: '40px',
+  height: '40px',
+  borderRadius: '6px',
+  objectFit: 'cover',
+};
+
+const buttonGreen: React.CSSProperties = {
   background: '#1db954',
   border: 'none',
   color: '#fff',
@@ -253,15 +266,16 @@ const buttonGreen = {
   borderRadius: '6px',
 };
 
-const buttonRed = {
+const buttonRed: React.CSSProperties = {
   background: '#e74c3c',
   border: 'none',
   color: '#fff',
   padding: '6px 10px',
   borderRadius: '6px',
+  fontSize: '12px',
 };
 
-const buttonOutline = {
+const buttonOutline: React.CSSProperties = {
   background: 'transparent',
   border: '1px solid #888',
   color: '#ccc',
@@ -270,17 +284,17 @@ const buttonOutline = {
   cursor: 'pointer',
 };
 
-const cardStyle = {
+const cardStyle: React.CSSProperties = {
   width: '140px',
   background: '#1e1e1e',
   borderRadius: '10px',
   padding: '10px',
-  textAlign: 'center' as const,
+  textAlign: 'center',
 };
 
-const cardImg = {
+const cardImg: React.CSSProperties = {
   width: '100%',
   height: '100px',
   borderRadius: '6px',
-  objectFit: 'cover' as const,
+  objectFit: 'cover',
 };
