@@ -3,13 +3,33 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSongs } from '@/utils/api';
-import Sidebar from '@/components/Sidebar';
 import SongCard from '@/components/SongCard';
+import Image from 'next/image';
+
+interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  genre: string;
+  image: string;
+  audioUrl: string;
+  favorite: boolean;
+  Since: string;
+  lyrics: string;
+  mood: string;
+}
+
+
+interface Artist {
+  name: string;
+  image: string;
+  count: number;
+}
 
 export default function HomePage() {
-  const [songs, setSongs] = useState<any[]>([]);
+  const [songs, setSongs] = useState<Song[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [popularArtists, setPopularArtists] = useState<any[]>([]);
+  const [popularArtists, setPopularArtists] = useState<Artist[]>([]);
   const [username, setUsername] = useState<string | null>(null);
   const trendingRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -22,11 +42,11 @@ export default function HomePage() {
       setUsername(user);
       fetchSongs();
     }
-  }, []);
+  }, [router]);
 
   const fetchSongs = async () => {
     try {
-      const data = await getSongs();
+      const data: Song[] = await getSongs();
       setSongs(data);
       const topArtists = getTopArtists(data, 6);
       setPopularArtists(topArtists);
@@ -35,8 +55,8 @@ export default function HomePage() {
     }
   };
 
-  const getTopArtists = (songs: any[], topN: number) => {
-    const count: Record<string, { name: string; image: string; count: number }> = {};
+  const getTopArtists = (songs: Song[], topN: number): Artist[] => {
+    const count: Record<string, Artist> = {};
     songs.forEach((song) => {
       if (song.artist && song.image) {
         if (!count[song.artist]) {
@@ -51,9 +71,9 @@ export default function HomePage() {
 
   const filteredSongs = songs.filter(
     (song) =>
-      song.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      song.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      song.genre.toLowerCase().includes(searchTerm.toLowerCase())
+      song.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      song.artist?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      song.genre?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const scroll = (direction: 'left' | 'right') => {
@@ -122,13 +142,11 @@ export default function HomePage() {
                 style={popularItem}
                 onClick={() => setSearchTerm(artist.name)}
               >
-                <img
-                  src={artist.image}
+                <Image
+                  src={artist.image || '/default-artist.png'}
                   alt={artist.name}
-                  onError={(e) => {
-                    const target = e.currentTarget as HTMLImageElement;
-                    target.src = '/default-artist.png';
-                  }}
+                  width={120}
+                  height={120}
                   style={popularImage}
                 />
                 <span style={artistName}>{artist.name}</span>
@@ -206,8 +224,6 @@ const popularItem: React.CSSProperties = {
 };
 
 const popularImage: React.CSSProperties = {
-  width: '120px',
-  height: '120px',
   borderRadius: '50%',
   objectFit: 'cover',
   boxShadow: '0 0 12px rgba(255, 0, 128, 0.4)',

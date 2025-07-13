@@ -5,28 +5,33 @@ import { useParams, useRouter } from 'next/navigation';
 import { getSongs, addToFavorites } from '@/utils/api';
 
 export default function SongDetailPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const router = useRouter();
+
   const [song, setSong] = useState<any>(null);
   const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
-    fetchSong();
-  }, []);
+    if (id) fetchSong();
+  }, [id]);
 
   const fetchSong = async () => {
-    const data = await getSongs();
-    const selected = data.find((s: any) => s.id === id);
-    if (selected) {
-      setSong(selected);
-      const favorites = JSON.parse(sessionStorage.getItem('favorites') || '[]');
-      setIsFavorited(favorites.includes(selected.id));
+    try {
+      const data = await getSongs();
+      const selected = data.find((s: any) => s.id === id);
+      if (selected) {
+        setSong(selected);
+        const favorites = JSON.parse(sessionStorage.getItem('favorites') || '[]');
+        setIsFavorited(favorites.includes(selected.id));
+      }
+    } catch (err) {
+      console.error('Gagal mengambil lagu:', err);
     }
   };
 
   const toggleFavorite = async () => {
     if (!song) return;
-
     let updatedFavorites: string[] = JSON.parse(sessionStorage.getItem('favorites') || '[]');
     if (isFavorited) {
       updatedFavorites = updatedFavorites.filter((fid) => fid !== song.id);
@@ -40,7 +45,9 @@ export default function SongDetailPage() {
 
   const handleBack = () => router.back();
 
-  if (!song) return <div style={{ padding: '24px', color: '#fff' }}>Loading...</div>;
+  if (!song) {
+    return <div style={{ padding: '24px', color: '#fff' }}>Loading...</div>;
+  }
 
   return (
     <div
@@ -63,10 +70,10 @@ export default function SongDetailPage() {
           flexWrap: 'wrap',
         }}
       >
-        {/* Gambar & Info */}
+        {/* Gambar & Info Lagu */}
         <div style={{ flex: '1 1 300px', minWidth: '280px' }}>
           <img
-            src={song.image}
+            src={song.image || '/default-artist.png'}
             alt={song.title}
             onError={(e) => ((e.currentTarget as HTMLImageElement).src = '/default-artist.png')}
             style={{
@@ -74,11 +81,13 @@ export default function SongDetailPage() {
               borderRadius: '16px',
               marginBottom: '20px',
               boxShadow: '0 0 24px rgba(255, 0, 128, 0.3)',
+              objectFit: 'cover',
+              maxHeight: '300px',
             }}
           />
           <h1 style={{ fontSize: '26px', fontWeight: 'bold', marginBottom: '10px' }}>{song.title}</h1>
           <p style={{ fontSize: '16px', color: '#ccc', marginBottom: '4px' }}>{song.artist}</p>
-          <p style={{ fontSize: '14px', color: '#999', marginBottom: '4px' }}>Genre: {song.genre}</p>
+          <p style={{ fontSize: '14px', color: '#999', marginBottom: '4px' }}>Genre: {song.genre || '-'}</p>
           <p style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>
             Since: {song.since || 'Unknown'}
           </p>

@@ -2,11 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
 import { getSongs, removeFromFavorites } from '@/utils/api';
+import Image from 'next/image';
+
+interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  genre: string;
+  image: string;
+}
 
 export default function FavoritesPage() {
-  const [favorites, setFavorites] = useState<any[]>([]);
+  const [favorites, setFavorites] = useState<Song[]>([]);
   const [username, setUsername] = useState<string | null>(null);
   const router = useRouter();
 
@@ -18,13 +26,13 @@ export default function FavoritesPage() {
       setUsername(user);
       fetchFavorites();
     }
-  }, []);
+  }, [router]);
 
   const fetchFavorites = async () => {
     try {
-      const allSongs = await getSongs();
-      const sessionFavIds = JSON.parse(sessionStorage.getItem('favorites') || '[]');
-      const filtered = allSongs.filter((song: any) => sessionFavIds.includes(song.id));
+      const allSongs: Song[] = await getSongs();
+      const sessionFavIds: string[] = JSON.parse(sessionStorage.getItem('favorites') || '[]');
+      const filtered = allSongs.filter((song: Song) => sessionFavIds.includes(song.id));
       setFavorites(filtered);
     } catch (err) {
       console.error('Gagal ambil favorit:', err);
@@ -34,11 +42,9 @@ export default function FavoritesPage() {
   const handleRemove = async (id: string) => {
     try {
       await removeFromFavorites(id);
-
-      const currentFavorites = JSON.parse(sessionStorage.getItem('favorites') || '[]');
-      const updatedFavorites = currentFavorites.filter((favId: string) => favId !== id);
+      const currentFavorites: string[] = JSON.parse(sessionStorage.getItem('favorites') || '[]');
+      const updatedFavorites = currentFavorites.filter((favId) => favId !== id);
       sessionStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-
       fetchFavorites();
     } catch (err) {
       console.error('Gagal hapus favorit:', err);
@@ -72,12 +78,13 @@ export default function FavoritesPage() {
           <div style={songListStyle}>
             {favorites.map((song) => (
               <div key={song.id} style={songCardStyle}>
-                <img
-                  src={song.image}
+                <Image
+                  src={song.image || '/default-artist.png'}
                   alt={song.title}
+                  width={160}
+                  height={120}
                   style={songImageStyle}
                   onClick={() => goToDetail(song.id)}
-                  onError={(e) => (e.currentTarget as HTMLImageElement).src = '/default-artist.png'}
                 />
                 <div style={{ marginTop: '10px' }}>
                   <h3 style={songTitleStyle}>{song.title}</h3>
@@ -120,9 +127,6 @@ const songCardStyle: React.CSSProperties = {
 };
 
 const songImageStyle: React.CSSProperties = {
-  width: '100%',
-  height: '120px',
-  objectFit: 'cover',
   borderRadius: '10px',
   cursor: 'pointer',
 };

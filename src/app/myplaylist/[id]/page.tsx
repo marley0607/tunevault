@@ -29,15 +29,23 @@ export default function PlaylistDetailPage() {
   }, [id]);
 
   const fetchSongs = async () => {
-    const data = await getSongs();
-    setSongs(data);
+    try {
+      const data = await getSongs();
+      setSongs(data);
+    } catch (err) {
+      console.error('Gagal ambil lagu:', err);
+    }
   };
 
   const fetchPlaylist = async (id: string) => {
-    const res = await fetch(`${PLAYLIST_API}/${id}`);
-    const data = await res.json();
-    setPlaylist(data);
-    setEditName(data.name);
+    try {
+      const res = await fetch(`${PLAYLIST_API}/${id}`);
+      const data = await res.json();
+      setPlaylist(data);
+      setEditName(data.name);
+    } catch (err) {
+      console.error('Gagal ambil playlist:', err);
+    }
   };
 
   const handleBack = () => router.push('/myplaylist');
@@ -50,20 +58,20 @@ export default function PlaylistDetailPage() {
       body: JSON.stringify({ ...playlist, name: editName }),
     });
     setIsEditingName(false);
-    fetchPlaylist(id as string);
+    fetchPlaylist(id!);
   };
 
-  const handleRemoveSong = async (songId: number) => {
-    const updated = playlist.songs.filter((sid: number) => sid !== songId);
+  const handleRemoveSong = async (songId: string | number) => {
+    const updated = playlist.songs.filter((sid: string | number) => sid !== songId);
     await fetch(`${PLAYLIST_API}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...playlist, songs: updated }),
     });
-    fetchPlaylist(id as string);
+    fetchPlaylist(id!);
   };
 
-  const handleAddSong = async (songId: number) => {
+  const handleAddSong = async (songId: string | number) => {
     if (playlist.songs.includes(songId)) return;
     const updated = [...playlist.songs, songId];
     await fetch(`${PLAYLIST_API}/${id}`, {
@@ -73,7 +81,7 @@ export default function PlaylistDetailPage() {
     });
     setSearchTerm('');
     setFilteredSongs([]);
-    fetchPlaylist(id as string);
+    fetchPlaylist(id!);
   };
 
   const handleSearch = (term: string) => {
@@ -85,7 +93,7 @@ export default function PlaylistDetailPage() {
     setFilteredSongs(result);
   };
 
-  const getSongById = (id: number) => songs.find((s) => s.id === id);
+  const getSongById = (id: string | number) => songs.find((s) => s.id === id);
 
   if (!playlist) return <div style={{ padding: '24px', color: '#fff' }}>Loading...</div>;
 
@@ -98,7 +106,7 @@ export default function PlaylistDetailPage() {
           flexWrap: 'wrap', alignItems: 'center'
         }}>
           <img
-            src={getSongById(playlist.songs[0])?.image || '/placeholder.jpg'}
+            src={getSongById(playlist?.songs?.[0])?.image || '/placeholder.jpg'}
             alt="Playlist"
             style={{
               width: '140px',
@@ -129,7 +137,7 @@ export default function PlaylistDetailPage() {
                 {playlist.name}
               </h1>
             )}
-            <p style={{ fontSize: '14px', color: '#aaa' }}>{playlist.songs.length} lagu</p>
+            <p style={{ fontSize: '14px', color: '#aaa' }}>{playlist?.songs?.length || 0} lagu</p>
           </div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button onClick={() => setIsEditingSongs(!isEditingSongs)} style={buttonOutline}>Edit</button>
@@ -192,9 +200,10 @@ export default function PlaylistDetailPage() {
               </tr>
             </thead>
             <tbody>
-              {playlist.songs.map((songId: number, index: number) => {
+              {playlist.songs.map((songId: string | number, index: number) => {
                 const song = getSongById(songId);
-                return song ? (
+                if (!song) return null;
+                return (
                   <tr key={song.id} style={{ borderBottom: '1px solid #222', height: '56px' }}>
                     <td>{index + 1}</td>
                     <td>
@@ -225,7 +234,7 @@ export default function PlaylistDetailPage() {
                       </td>
                     )}
                   </tr>
-                ) : null;
+                );
               })}
             </tbody>
           </table>

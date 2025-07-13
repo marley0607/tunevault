@@ -1,4 +1,3 @@
-// app/page.tsx
 'use client';
 
 import { useEffect } from 'react';
@@ -8,13 +7,17 @@ export default function LandingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (user) {
-      router.push('/home'); // Jika sudah login, langsung ke halaman utama
-    } else {
-      router.push('/login'); // Kalau belum login, arahkan ke login
+    // Cek apakah sedang di browser (hindari akses localStorage di server)
+    if (typeof window !== 'undefined') {
+      const user = localStorage.getItem('user');
+      if (user) {
+        router.replace('/home'); // 🔁 replace agar tidak bisa kembali ke /
+      } else {
+        router.replace('/login');
+      }
     }
-  }, []);
+  }, [router]);
 
-  return null; // Tidak tampilkan apa-apa karena ini hanya halaman pengarah
+  // Tidak tampilkan apa pun karena ini hanya redirector
+  return null;
 }

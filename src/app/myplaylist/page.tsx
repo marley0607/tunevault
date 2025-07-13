@@ -7,10 +7,28 @@ import Link from 'next/link';
 
 const PLAYLIST_API = 'https://686ffc0546567442480122e2.mockapi.io/playlist';
 
+interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  genre: string;
+  image: string;
+  audioUrl: string;
+  lyrics: string;
+  mood: string;
+  favorite: boolean;
+}
+
+interface Playlist {
+  id: string;
+  name: string;
+  songs: string[]; // array of song ids
+}
+
 export default function MyPlaylistPage() {
   const router = useRouter();
-  const [songs, setSongs] = useState<any[]>([]);
-  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [selectedSongIds, setSelectedSongIds] = useState<string[]>([]);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,7 +37,7 @@ export default function MyPlaylistPage() {
   useEffect(() => {
     const user = localStorage.getItem('user');
     if (!user) {
-      router.push('/'); // Redirect ke halaman login kalau belum login
+      router.push('/');
     } else {
       setIsAuthenticated(true);
       fetchSongs();
@@ -39,7 +57,8 @@ export default function MyPlaylistPage() {
   };
 
   const createPlaylist = async () => {
-    if (!newPlaylistName || selectedSongIds.length === 0) return;
+    if (!newPlaylistName.trim() || selectedSongIds.length === 0) return;
+
     try {
       const res = await fetch(PLAYLIST_API, {
         method: 'POST',
@@ -70,10 +89,10 @@ export default function MyPlaylistPage() {
   const filteredSongs = songs.filter((song) =>
     song.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     song.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (song.genre || '').toLowerCase().includes(searchTerm.toLowerCase())
+    song.genre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (!isAuthenticated) return null; // Tampilkan kosong kalau belum terverifikasi
+  if (!isAuthenticated) return null;
 
   return (
     <div
@@ -82,12 +101,12 @@ export default function MyPlaylistPage() {
         color: '#fff',
         minHeight: '100vh',
         padding: '20px',
-        paddingTop: '90px', // ✅ menghindari ketutup navbar
+        paddingTop: '90px',
       }}
     >
       <h1 style={{ fontSize: '26px', fontWeight: 'bold', marginBottom: '20px' }}>🎧 My Playlist</h1>
 
-      {/* Buat Playlist */}
+      {/* Buat Playlist Baru */}
       <div style={{ background: '#1c1c1c', padding: '20px', borderRadius: '12px', marginBottom: '30px' }}>
         <h2 style={{ fontSize: '18px', marginBottom: '10px' }}>🆕 Buat Playlist Baru</h2>
 
@@ -180,7 +199,7 @@ export default function MyPlaylistPage() {
                 }}
               >
                 {thumbs.length > 0 ? (
-                  thumbs.map((img: string, index: number) => (
+                  thumbs.map((img, index) => (
                     <img
                       key={index}
                       src={img}
@@ -229,7 +248,8 @@ export default function MyPlaylistPage() {
   );
 }
 
-// ===== STYLE =====
+// ========== Style ==========
+
 const inputStyle: React.CSSProperties = {
   padding: '10px',
   borderRadius: '8px',
