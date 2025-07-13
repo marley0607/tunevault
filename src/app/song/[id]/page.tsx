@@ -25,19 +25,21 @@ export default function SongDetailPage() {
   const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
-    if (id) fetchSong();
+    if (id) fetchSongById(id);
   }, [id]);
 
-  const fetchSong = async () => {
+  const fetchSongById = async (songId: string) => {
     try {
       const data = await getSongs();
       const songsArray = Array.isArray(data) ? data : [];
-      const selected = songsArray.find((s: any) => s.id === id);
+      const selected = songsArray.find((s: Song) => s.id === songId);
+
       if (selected) {
         setSong(selected);
+
         if (typeof window !== 'undefined') {
-          const favorites = JSON.parse(sessionStorage.getItem('favorites') || '[]');
-          setIsFavorited(favorites.includes(selected.id));
+          const favs: string[] = JSON.parse(sessionStorage.getItem('favorites') || '[]');
+          setIsFavorited(favs.includes(songId));
         }
       }
     } catch (err) {
@@ -48,123 +50,53 @@ export default function SongDetailPage() {
   const toggleFavorite = async () => {
     if (!song || typeof window === 'undefined') return;
 
-    let updatedFavorites: string[] = JSON.parse(sessionStorage.getItem('favorites') || '[]');
+    let favs: string[] = JSON.parse(sessionStorage.getItem('favorites') || '[]');
+
     if (isFavorited) {
-      updatedFavorites = updatedFavorites.filter((fid) => fid !== song.id);
+      favs = favs.filter((id) => id !== song.id);
     } else {
-      updatedFavorites.push(song.id);
+      favs.push(song.id);
       await addToFavorites(song.id);
     }
-    sessionStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+
+    sessionStorage.setItem('favorites', JSON.stringify(favs));
     setIsFavorited(!isFavorited);
   };
 
   const handleBack = () => router.back();
 
-  if (!song) {
-    return <div style={{ padding: '24px', color: '#fff' }}>Loading...</div>;
-  }
+  if (!song) return <div style={{ padding: '24px', color: '#fff' }}>Loading...</div>;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-        background: '#121212',
-        color: '#fff',
-        padding: '20px',
-        paddingTop: '80px',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          gap: '32px',
-          flexWrap: 'wrap' as const,
-        }}
-      >
+    <div style={containerStyle}>
+      <div style={wrapperStyle}>
         {/* Info Lagu */}
-        <div style={{ flex: '1 1 300px', minWidth: '280px' }}>
+        <div style={infoStyle}>
           <img
             src={song.image || '/default-artist.png'}
             alt={song.title}
             onError={(e) => ((e.currentTarget as HTMLImageElement).src = '/default-artist.png')}
-            style={{
-              width: '100%',
-              borderRadius: '16px',
-              marginBottom: '20px',
-              boxShadow: '0 0 24px rgba(255, 0, 128, 0.3)',
-              objectFit: 'cover',
-              maxHeight: '300px',
-            }}
+            style={imageStyle}
           />
-          <h1 style={{ fontSize: '26px', fontWeight: 'bold', marginBottom: '10px' }}>{song.title}</h1>
-          <p style={{ fontSize: '16px', color: '#ccc', marginBottom: '4px' }}>{song.artist}</p>
-          <p style={{ fontSize: '14px', color: '#999', marginBottom: '4px' }}>Genre: {song.genre || '-'}</p>
-          <p style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>
-            Mood: {song.mood || '-'}
-          </p>
+          <h1 style={titleStyle}>{song.title}</h1>
+          <p style={artistStyle}>{song.artist}</p>
+          <p style={infoText}>Genre: {song.genre || '-'}</p>
+          <p style={infoText}>Mood: {song.mood || '-'}</p>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '12px', marginTop: '10px' }}>
-            <button
-              onClick={toggleFavorite}
-              style={{
-                backgroundColor: isFavorited ? '#ff3b3b' : '#1db954',
-                border: 'none',
-                color: '#fff',
-                padding: '10px 20px',
-                borderRadius: '30px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                fontSize: '14px',
-                flex: '1',
-                minWidth: '140px',
-              }}
-            >
+          <div style={buttonGroup}>
+            <button onClick={toggleFavorite} style={{ ...favoriteButton, backgroundColor: isFavorited ? '#ff3b3b' : '#1db954' }}>
               {isFavorited ? '★ Favorit' : '☆ Tambah ke Favorit'}
             </button>
-
-            <button
-              onClick={handleBack}
-              style={{
-                background: 'transparent',
-                border: '1px solid #888',
-                color: '#ccc',
-                borderRadius: '30px',
-                padding: '10px 20px',
-                cursor: 'pointer',
-                fontWeight: '500',
-                fontSize: '14px',
-                flex: '1',
-                minWidth: '100px',
-              }}
-            >
+            <button onClick={handleBack} style={backButton}>
               ← Kembali
             </button>
           </div>
         </div>
 
         {/* Lirik Lagu */}
-        <div style={{ flex: '2', minWidth: '280px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '16px', marginTop: '10px' }}>
-            Lirik Lagu
-          </h2>
-          <p
-            style={{
-              fontSize: '16px',
-              lineHeight: '1.8',
-              whiteSpace: 'pre-wrap',
-              color: '#eee',
-              background: '#1a1a1a',
-              padding: '16px',
-              borderRadius: '12px',
-              boxShadow: '0 0 8px rgba(255, 0, 128, 0.1)',
-              maxHeight: '400px',
-              overflowY: 'auto',
-            }}
-          >
+        <div style={lyricsWrapper}>
+          <h2 style={lyricsTitle}>Lirik Lagu</h2>
+          <p style={lyricsBox}>
             {song.lyrics || 'Lirik tidak tersedia untuk lagu ini.'}
           </p>
         </div>
@@ -172,3 +104,110 @@ export default function SongDetailPage() {
     </div>
   );
 }
+
+// ===== STYLE =====
+const containerStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  minHeight: '100vh',
+  background: '#121212',
+  color: '#fff',
+  padding: '20px',
+  paddingTop: '80px',
+};
+
+const wrapperStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'row',
+  gap: '32px',
+  flexWrap: 'wrap',
+};
+
+const infoStyle: React.CSSProperties = {
+  flex: '1 1 300px',
+  minWidth: '280px',
+};
+
+const imageStyle: React.CSSProperties = {
+  width: '100%',
+  borderRadius: '16px',
+  marginBottom: '20px',
+  boxShadow: '0 0 24px rgba(255, 0, 128, 0.3)',
+  objectFit: 'cover',
+  maxHeight: '300px',
+};
+
+const titleStyle: React.CSSProperties = {
+  fontSize: '26px',
+  fontWeight: 'bold',
+  marginBottom: '10px',
+};
+
+const artistStyle: React.CSSProperties = {
+  fontSize: '16px',
+  color: '#ccc',
+  marginBottom: '4px',
+};
+
+const infoText: React.CSSProperties = {
+  fontSize: '14px',
+  color: '#999',
+  marginBottom: '4px',
+};
+
+const buttonGroup: React.CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '12px',
+  marginTop: '10px',
+};
+
+const favoriteButton: React.CSSProperties = {
+  border: 'none',
+  color: '#fff',
+  padding: '10px 20px',
+  borderRadius: '30px',
+  cursor: 'pointer',
+  fontWeight: 'bold',
+  fontSize: '14px',
+  flex: 1,
+  minWidth: '140px',
+};
+
+const backButton: React.CSSProperties = {
+  background: 'transparent',
+  border: '1px solid #888',
+  color: '#ccc',
+  borderRadius: '30px',
+  padding: '10px 20px',
+  cursor: 'pointer',
+  fontWeight: 500,
+  fontSize: '14px',
+  flex: 1,
+  minWidth: '100px',
+};
+
+const lyricsWrapper: React.CSSProperties = {
+  flex: 2,
+  minWidth: '280px',
+};
+
+const lyricsTitle: React.CSSProperties = {
+  fontSize: '22px',
+  fontWeight: 'bold',
+  marginBottom: '16px',
+  marginTop: '10px',
+};
+
+const lyricsBox: React.CSSProperties = {
+  fontSize: '16px',
+  lineHeight: '1.8',
+  whiteSpace: 'pre-wrap',
+  color: '#eee',
+  background: '#1a1a1a',
+  padding: '16px',
+  borderRadius: '12px',
+  boxShadow: '0 0 8px rgba(255, 0, 128, 0.1)',
+  maxHeight: '400px',
+  overflowY: 'auto',
+};

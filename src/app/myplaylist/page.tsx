@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { getSongs } from '@/utils/api';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const PLAYLIST_API = 'https://686ffc0546567442480122e2.mockapi.io/playlist';
 
@@ -22,7 +23,7 @@ interface Song {
 interface Playlist {
   id: string;
   name: string;
-  songs: string[]; // array of song IDs
+  songs: string[];
 }
 
 export default function MyPlaylistPage() {
@@ -43,21 +44,21 @@ export default function MyPlaylistPage() {
       fetchSongs();
       fetchPlaylists();
     }
-  }, []);
+  }, [router]);
 
   const fetchSongs = async () => {
     try {
       const data = await getSongs();
-      const cleaned = (Array.isArray(data) ? data : []).map((s: any) => ({
-        id: s.id,
+      const cleaned: Song[] = (Array.isArray(data) ? data : []).map((s: Partial<Song>) => ({
+        id: s.id || '',
         title: s.title || 'Unknown',
         artist: s.artist || 'Unknown',
         genre: s.genre || 'Unknown',
         image: s.image || '/default-song.png',
         audioUrl: s.audioUrl || '',
-        favorite: s.favorite ?? false,
         lyrics: s.lyrics || '',
         mood: s.mood || '',
+        favorite: s.favorite ?? false,
       }));
       setSongs(cleaned);
     } catch (error) {
@@ -68,9 +69,9 @@ export default function MyPlaylistPage() {
   const fetchPlaylists = async () => {
     try {
       const res = await fetch(PLAYLIST_API);
-      const data = await res.json();
+      const data: Playlist[] = await res.json();
       const valid = Array.isArray(data)
-        ? data.map((p: any) => ({
+        ? data.map((p) => ({
             ...p,
             songs: Array.isArray(p.songs) ? p.songs : [],
           }))
@@ -87,21 +88,16 @@ export default function MyPlaylistPage() {
       return;
     }
     if (selectedSongIds.length === 0) {
-      alert('Pilih minimal satu lagu untuk membuat playlist');
+      alert('Pilih minimal satu lagu');
       return;
     }
-
     try {
       const res = await fetch(PLAYLIST_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newPlaylistName,
-          songs: selectedSongIds,
-        }),
+        body: JSON.stringify({ name: newPlaylistName, songs: selectedSongIds }),
       });
       if (!res.ok) throw new Error('Gagal menyimpan playlist');
-
       setNewPlaylistName('');
       setSelectedSongIds([]);
       fetchPlaylists();
@@ -135,23 +131,12 @@ export default function MyPlaylistPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <div
-      style={{
-        background: '#121212',
-        color: '#fff',
-        minHeight: '100vh',
-        padding: '20px',
-        paddingTop: '90px',
-      }}
-    >
-      <h1 style={{ fontSize: '26px', fontWeight: 'bold', marginBottom: '20px' }}>
-        🎧 My Playlist
-      </h1>
+    <div style={{ background: '#121212', color: '#fff', minHeight: '100vh', padding: '20px', paddingTop: '90px' }}>
+      <h1 style={{ fontSize: '26px', fontWeight: 'bold', marginBottom: '20px' }}>🎧 My Playlist</h1>
 
-      {/* Form buat playlist */}
+      {/* Buat Playlist */}
       <div style={playlistBoxStyle}>
         <h2 style={{ fontSize: '18px', marginBottom: '10px' }}>🆕 Buat Playlist Baru</h2>
-
         <input
           type="text"
           placeholder="Nama playlist..."
@@ -180,22 +165,20 @@ export default function MyPlaylistPage() {
                     : '1px solid #333',
                 }}
               >
-                <img
+                <Image
                   src={song.image}
                   alt={song.title}
+                  width={160}
+                  height={100}
                   style={songImageStyle}
                 />
-                <div style={{ marginTop: '6px', fontSize: '14px', fontWeight: 'bold' }}>
-                  {song.title}
-                </div>
+                <div style={{ marginTop: '6px', fontSize: '14px', fontWeight: 'bold' }}>{song.title}</div>
                 <div style={{ fontSize: '12px', color: '#ccc' }}>{song.artist}</div>
               </div>
             ))}
         </div>
 
-        <button onClick={createPlaylist} style={saveBtnStyle}>
-          💾 Simpan Playlist
-        </button>
+        <button onClick={createPlaylist} style={saveBtnStyle}>💾 Simpan Playlist</button>
       </div>
 
       {/* Daftar Playlist */}
@@ -211,11 +194,13 @@ export default function MyPlaylistPage() {
             <div key={playlist.id} style={playlistCardStyle}>
               <div style={gridThumbStyle}>
                 {thumbs.length > 0 ? (
-                  thumbs.map((img, index) => (
-                    <img
-                      key={index}
-                      src={img}
+                  thumbs.map((img, i) => (
+                    <Image
+                      key={i}
+                      src={img || '/default-song.png'}
                       alt="thumb"
+                      width={130}
+                      height={60}
                       style={{ width: '100%', height: '60px', objectFit: 'cover' }}
                     />
                   ))
@@ -261,8 +246,7 @@ export default function MyPlaylistPage() {
   );
 }
 
-// ========== Styles ==========
-
+// ===== STYLES =====
 const inputStyle: React.CSSProperties = {
   padding: '10px',
   borderRadius: '8px',

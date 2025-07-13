@@ -1,19 +1,17 @@
-// src/types/song.ts
-export interface songs {
+export interface Song {
   id: string;
   title: string;
   artist: string;
-  genre: string;
   image: string;
-  audioUrl: string;
-  favorite: boolean;
-  Since: string;
-  lyrics: string;
-  mood: string;
+  lyrics?: string;
+  genre?: string;
+  audioUrl?: string;
+  mood?: string;
+  favorite?: boolean;
 }
 
-export interface playlist {
+export interface Playlist {
   id: string;
   name: string;
-  songs: string[];
+  songs: (string | number)[];
 }

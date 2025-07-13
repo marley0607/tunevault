@@ -7,41 +7,61 @@ import { getSongs } from '@/utils/api';
 
 const PLAYLIST_API = 'https://686ffc0546567442480122e2.mockapi.io/playlist';
 
-export default function PlaylistDetailPage() {
-  const params = useParams();
-  const rawId = params.id;
-  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  genre: string;
+  image: string;
+  audioUrl: string;
+  lyrics: string;
+  mood: string;
+  favorite: boolean;
+}
 
+interface Playlist {
+  id: string;
+  name: string;
+  songs: string[];
+}
+
+export default function PlaylistDetailPage() {
   const router = useRouter();
-  const [playlist, setPlaylist] = useState<any>(null);
-  const [songs, setSongs] = useState<any[]>([]);
+  const params = useParams();
+  const id = typeof params.id === 'string' ? params.id : params.id?.[0];
+
+  const [playlist, setPlaylist] = useState<Playlist | null>(null);
+  const [songs, setSongs] = useState<Song[]>([]);
   const [editName, setEditName] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingSongs, setIsEditingSongs] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredSongs, setFilteredSongs] = useState<any[]>([]);
+  const [filteredSongs, setFilteredSongs] = useState<Song[]>([]);
 
   useEffect(() => {
-    if (id) fetchPlaylist(id);
-    fetchSongs();
+    if (id) {
+      fetchPlaylist(id);
+      fetchSongs();
+    }
   }, [id]);
 
   const fetchSongs = async () => {
     try {
       const data = await getSongs();
-      setSongs(data);
+      setSongs(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Gagal ambil lagu:', err);
     }
   };
 
-  const fetchPlaylist = async (id: string) => {
+  const fetchPlaylist = async (playlistId: string) => {
     try {
-      const res = await fetch(`${PLAYLIST_API}/${id}`);
+      const res = await fetch(`${PLAYLIST_API}/${playlistId}`);
       const data = await res.json();
       setPlaylist({
-        ...data,
+        id: data.id,
+        name: data.name,
         songs: Array.isArray(data.songs) ? data.songs : [],
       });
       setEditName(data.name);
@@ -50,46 +70,46 @@ export default function PlaylistDetailPage() {
     }
   };
 
-  const handleBack = () => router.push('/myplaylist');
-
   const handleSaveName = async () => {
-    if (!editName.trim()) return;
-    await fetch(`${PLAYLIST_API}/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...playlist,
-        name: editName,
-        songs: Array.isArray(playlist.songs) ? playlist.songs : [],
-      }),
-    });
-    setIsEditingName(false);
-    fetchPlaylist(id!);
+    if (!editName.trim() || !playlist) return;
+    try {
+      await fetch(`${PLAYLIST_API}/${playlist.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...playlist, name: editName }),
+      });
+      setIsEditingName(false);
+      fetchPlaylist(playlist.id);
+    } catch (err) {
+      console.error('Gagal update nama:', err);
+    }
   };
 
-  const handleRemoveSong = async (songId: string | number) => {
-    const currentSongs = Array.isArray(playlist.songs) ? playlist.songs : [];
-    const updated = currentSongs.filter((sid: string | number) => sid !== songId);
-    await fetch(`${PLAYLIST_API}/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...playlist, songs: updated }),
-    });
-    fetchPlaylist(id!);
+  const handleRemoveSong = async (songId: string) => {
+    if (!playlist) return;
+    const updatedSongs = playlist.songs.filter((sid) => sid !== songId);
+    await updatePlaylist({ ...playlist, songs: updatedSongs });
   };
 
-  const handleAddSong = async (songId: string | number) => {
-    const currentSongs = Array.isArray(playlist.songs) ? playlist.songs : [];
-    if (currentSongs.includes(songId)) return;
-    const updated = [...currentSongs, songId];
-    await fetch(`${PLAYLIST_API}/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...playlist, songs: updated }),
-    });
+  const handleAddSong = async (songId: string) => {
+    if (!playlist || playlist.songs.includes(songId)) return;
+    const updatedSongs = [...playlist.songs, songId];
+    await updatePlaylist({ ...playlist, songs: updatedSongs });
     setSearchTerm('');
     setFilteredSongs([]);
-    fetchPlaylist(id!);
+  };
+
+  const updatePlaylist = async (updatedPlaylist: Playlist) => {
+    try {
+      await fetch(`${PLAYLIST_API}/${updatedPlaylist.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedPlaylist),
+      });
+      fetchPlaylist(updatedPlaylist.id);
+    } catch (err) {
+      console.error('Gagal update playlist:', err);
+    }
   };
 
   const handleSearch = (term: string) => {
@@ -101,7 +121,7 @@ export default function PlaylistDetailPage() {
     setFilteredSongs(result);
   };
 
-  const getSongById = (id: string | number) => songs.find((s) => s.id === id);
+  const getSongById = (id: string) => songs.find((s) => s.id === id);
 
   if (!playlist) return <div style={{ padding: '24px', color: '#fff' }}>Loading...</div>;
 
@@ -111,19 +131,15 @@ export default function PlaylistDetailPage() {
         {/* Header */}
         <div style={headerStyle}>
           <img
-            src={getSongById(playlist?.songs?.[0])?.image || '/placeholder.jpg'}
+            src={getSongById(playlist.songs[0])?.image || '/placeholder.jpg'}
             alt="Playlist"
             style={imgStyle}
           />
           <div style={{ flex: 1, minWidth: '250px' }}>
             <p style={{ fontSize: '14px', color: '#ccc' }}>My Playlist</p>
             {isEditingName ? (
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' as const }}>
-                <input
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  style={inputStyle}
-                />
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <input value={editName} onChange={(e) => setEditName(e.target.value)} style={inputStyle} />
                 <button onClick={handleSaveName} style={buttonGreen}>Save</button>
               </div>
             ) : (
@@ -131,12 +147,12 @@ export default function PlaylistDetailPage() {
                 {playlist.name}
               </h1>
             )}
-            <p style={{ fontSize: '14px', color: '#aaa' }}>{playlist?.songs?.length || 0} lagu</p>
+            <p style={{ fontSize: '14px', color: '#aaa' }}>{playlist.songs.length} lagu</p>
           </div>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' as const }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button onClick={() => setIsEditingSongs(!isEditingSongs)} style={buttonOutline}>Edit</button>
             <button onClick={() => setShowAdd(!showAdd)} style={buttonOutline}>Add</button>
-            <button onClick={handleBack} style={buttonOutline}>Back</button>
+            <button onClick={() => router.push('/myplaylist')} style={buttonOutline}>Back</button>
           </div>
         </div>
 
@@ -150,29 +166,26 @@ export default function PlaylistDetailPage() {
               placeholder="Cari lagu untuk ditambahkan..."
               style={searchInputStyle}
             />
-            <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '16px' }}>
-              {filteredSongs.map((song) => {
-                const currentSongs = Array.isArray(playlist.songs) ? playlist.songs : [];
-                return (
-                  <div key={song.id} style={cardStyle}>
-                    <img src={song.image} alt={song.title} style={cardImg} />
-                    <div style={{ fontWeight: 'bold' }}>{song.title}</div>
-                    <div style={{ fontSize: '12px', color: '#ccc' }}>{song.artist}</div>
-                    <button
-                      onClick={() => handleAddSong(song.id)}
-                      disabled={currentSongs.includes(song.id)}
-                      style={{
-                        ...buttonGreen,
-                        marginTop: '6px',
-                        background: currentSongs.includes(song.id) ? '#555' : '#1db954',
-                        cursor: currentSongs.includes(song.id) ? 'not-allowed' : 'pointer',
-                      }}
-                    >
-                      {currentSongs.includes(song.id) ? '✔ Ditambahkan' : 'Tambah'}
-                    </button>
-                  </div>
-                );
-              })}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+              {filteredSongs.map((song) => (
+                <div key={song.id} style={cardStyle}>
+                  <img src={song.image} alt={song.title} style={cardImg} />
+                  <div style={{ fontWeight: 'bold' }}>{song.title}</div>
+                  <div style={{ fontSize: '12px', color: '#ccc' }}>{song.artist}</div>
+                  <button
+                    onClick={() => handleAddSong(song.id)}
+                    disabled={playlist.songs.includes(song.id)}
+                    style={{
+                      ...buttonGreen,
+                      marginTop: '6px',
+                      background: playlist.songs.includes(song.id) ? '#555' : '#1db954',
+                      cursor: playlist.songs.includes(song.id) ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {playlist.songs.includes(song.id) ? '✔ Ditambahkan' : 'Tambah'}
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -189,7 +202,7 @@ export default function PlaylistDetailPage() {
               </tr>
             </thead>
             <tbody>
-              {(playlist.songs || []).map((songId: string | number, index: number) => {
+              {playlist.songs.map((songId, index) => {
                 const song = getSongById(songId);
                 if (!song) return null;
                 return (
@@ -204,9 +217,7 @@ export default function PlaylistDetailPage() {
                     <td>{song.artist}</td>
                     {isEditingSongs && (
                       <td>
-                        <button onClick={() => handleRemoveSong(song.id)} style={buttonRed}>
-                          Hapus
-                        </button>
+                        <button onClick={() => handleRemoveSong(song.id)} style={buttonRed}>Hapus</button>
                       </td>
                     )}
                   </tr>
