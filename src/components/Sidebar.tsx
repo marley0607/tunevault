@@ -30,8 +30,6 @@ export default function Sidebar() {
           backdrop-filter: blur(12px);
           color: #fff;
           display: flex;
-          justify-content: space-between;
-          padding: 16px 24px;
           box-sizing: border-box;
           z-index: 99;
           box-shadow: 0 0 10px rgba(0, 255, 128, 0.15);
@@ -44,6 +42,8 @@ export default function Sidebar() {
           position: sticky;
           top: 0;
           border-right: 1px solid #333;
+          justify-content: space-between;
+          padding: 16px 24px;
         }
 
         .sidebar.mobile {
@@ -52,10 +52,26 @@ export default function Sidebar() {
           align-items: center;
           width: 100%;
           height: 60px;
-          position: relative; /* changed from fixed */
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          background: rgba(28, 28, 28, 0.7);
+          backdrop-filter: blur(10px);
           border-top: 1px solid #333;
           box-shadow: 0 0 8px rgba(0, 255, 128, 0.2);
-          margin-top: 16px;
+          padding: 0 16px;
+        }
+
+        @media (max-width: 768px) {
+          .sidebar.desktop {
+            display: none;
+          }
+        }
+
+        @media (min-width: 769px) {
+          .sidebar.mobile {
+            display: none;
+          }
         }
 
         .logo {
@@ -86,18 +102,6 @@ export default function Sidebar() {
 
         .logout:hover {
           background-color: #e04344;
-        }
-
-        @media (max-width: 768px) {
-          .sidebar.desktop {
-            display: none;
-          }
-        }
-
-        @media (min-width: 769px) {
-          .sidebar.mobile {
-            display: none;
-          }
         }
 
         .sidebar-link {
@@ -140,7 +144,7 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* Mobile Sidebar - Menyatu di bawah konten */}
+      {/* Mobile Sidebar */}
       <aside className="sidebar mobile">
         <SidebarLink href="/home" label="🏠" />
         <SidebarLink href="/favorites" label="❤️" />
