@@ -41,8 +41,11 @@ export default function MyPlaylistPage() {
       router.push('/');
     } else {
       setIsAuthenticated(true);
-      fetchSongs();
-      fetchPlaylists();
+      const loadData = async () => {
+        await fetchSongs();
+        await fetchPlaylists();
+      };
+      loadData();
     }
   }, [router]);
 
@@ -134,7 +137,7 @@ export default function MyPlaylistPage() {
     <div style={{ background: '#121212', color: '#fff', minHeight: '100vh', padding: '20px', paddingTop: '90px' }}>
       <h1 style={{ fontSize: '26px', fontWeight: 'bold', marginBottom: '20px' }}>🎧 My Playlist</h1>
 
-      {/* Buat Playlist */}
+      {/* Buat Playlist Baru */}
       <div style={playlistBoxStyle}>
         <h2 style={{ fontSize: '18px', marginBottom: '10px' }}>🆕 Buat Playlist Baru</h2>
         <input
@@ -171,6 +174,7 @@ export default function MyPlaylistPage() {
                   width={160}
                   height={100}
                   style={songImageStyle}
+                  unoptimized
                 />
                 <div style={{ marginTop: '6px', fontSize: '14px', fontWeight: 'bold' }}>{song.title}</div>
                 <div style={{ fontSize: '12px', color: '#ccc' }}>{song.artist}</div>
@@ -187,8 +191,8 @@ export default function MyPlaylistPage() {
         {playlists.map((playlist) => {
           const thumbs = (playlist.songs || [])
             .slice(0, 4)
-            .map((id) => songs.find((s) => s.id === id)?.image)
-            .filter(Boolean);
+            .map((id) => songs.find((s) => s.id === id)?.image || null)
+            .filter(Boolean) as string[];
 
           return (
             <div key={playlist.id} style={playlistCardStyle}>
@@ -197,11 +201,12 @@ export default function MyPlaylistPage() {
                   thumbs.map((img, i) => (
                     <Image
                       key={i}
-                      src={img || '/default-song.png'}
+                      src={img}
                       alt="thumb"
                       width={130}
                       height={60}
                       style={{ width: '100%', height: '60px', objectFit: 'cover' }}
+                      unoptimized
                     />
                   ))
                 ) : (
@@ -246,7 +251,7 @@ export default function MyPlaylistPage() {
   );
 }
 
-// ===== STYLES =====
+// ===== STYLE DEFINITIONS =====
 const inputStyle: React.CSSProperties = {
   padding: '10px',
   borderRadius: '8px',

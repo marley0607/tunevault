@@ -73,20 +73,23 @@ export default function FavoritesPage() {
 
       <main style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
         {favorites.length === 0 ? (
-          <p style={{ color: '#aaa' }}>Kamu belum menambahkan lagu ke favorit.</p>
+          <p style={{ color: '#aaa', textAlign: 'center', marginTop: '40px' }}>Kamu belum menambahkan lagu ke favorit.</p>
         ) : (
           <div style={songListStyle}>
             {favorites.map((song) => (
               <div key={song.id} style={songCardStyle}>
-                <Image
-                  src={song.image || '/default-artist.png'}
-                  alt={song.title}
-                  width={160}
-                  height={120}
-                  style={songImageStyle}
-                  onClick={() => goToDetail(song.id)}
-                />
-                <div style={{ marginTop: '10px' }}>
+                <div style={{ position: 'relative' }}>
+                  <Image
+                    src={song.image || '/default-artist.png'}
+                    alt={song.title}
+                    width={180}
+                    height={180}
+                    style={songImageStyle}
+                    onClick={() => goToDetail(song.id)}
+                  />
+                  <div style={overlayPlay} onClick={() => goToDetail(song.id)}>▶</div>
+                </div>
+                <div style={{ marginTop: '12px', textAlign: 'center' }}>
                   <h3 style={songTitleStyle}>{song.title}</h3>
                   <p style={songDetailStyle}>{song.artist} · {song.genre}</p>
                   <button
@@ -110,47 +113,67 @@ export default function FavoritesPage() {
 const songListStyle: React.CSSProperties = {
   display: 'flex',
   flexWrap: 'wrap',
-  gap: '20px',
+  gap: '24px',
   justifyContent: 'center',
 };
 
 const songCardStyle: React.CSSProperties = {
   backgroundColor: '#1e1e1e',
-  borderRadius: '12px',
-  padding: '12px',
+  borderRadius: '14px',
+  padding: '16px',
   width: '100%',
-  maxWidth: '180px',
-  boxShadow: '0 0 8px rgba(255,0,128,0.3)',
+  maxWidth: '200px',
+  boxShadow: '0 0 10px rgba(0,255,128,0.2)',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
+  transition: 'transform 0.2s ease',
 };
 
 const songImageStyle: React.CSSProperties = {
   borderRadius: '10px',
   cursor: 'pointer',
+  transition: 'transform 0.2s ease',
 };
 
 const songTitleStyle: React.CSSProperties = {
-  fontSize: '14px',
+  fontSize: '15px',
   fontWeight: 'bold',
   marginBottom: '4px',
-  textAlign: 'center',
+  color: '#fff',
 };
 
 const songDetailStyle: React.CSSProperties = {
-  fontSize: '12px',
-  color: '#ccc',
-  textAlign: 'center',
+  fontSize: '13px',
+  color: '#bbb',
 };
 
 const removeBtnStyle: React.CSSProperties = {
   marginTop: '10px',
-  padding: '6px 10px',
+  padding: '6px 12px',
   border: 'none',
   borderRadius: '20px',
   color: '#fff',
   fontSize: '13px',
   backgroundColor: '#d32f2f',
   cursor: 'pointer',
+  transition: 'background 0.3s ease',
+};
+
+const overlayPlay: React.CSSProperties = {
+  position: 'absolute',
+  bottom: '10px',
+  right: '10px',
+  backgroundColor: '#1db954',
+  borderRadius: '50%',
+  width: '32px',
+  height: '32px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: '#fff',
+  fontWeight: 'bold',
+  fontSize: '14px',
+  cursor: 'pointer',
+  boxShadow: '0 0 6px rgba(0,0,0,0.3)',
 };
