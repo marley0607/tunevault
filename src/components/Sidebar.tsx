@@ -19,7 +19,6 @@ export default function Sidebar() {
     }
   }, []);
 
-  // Sembunyikan Sidebar saat login
   if (pathname === '/login' || pathname === '/') return null;
   if (!isLoggedIn) return null;
 
@@ -103,9 +102,29 @@ export default function Sidebar() {
             display: none;
           }
         }
+
+        .sidebar-link {
+          color: #fff;
+          text-decoration: none;
+          padding: 8px 12px;
+          border-radius: 8px;
+          font-weight: 500;
+          font-size: 16px;
+          background-color: transparent;
+          transition: all 0.3s ease;
+          text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+        }
+
+        .sidebar-link:hover {
+          background-color: #1db95420;
+        }
+
+        .sidebar-link.active {
+          background-color: #1db95440;
+        }
       `}</style>
 
-      {/* Sidebar Desktop */}
+      {/* Desktop Sidebar */}
       <aside className="sidebar desktop">
         <div>
           <div className="logo">TuneVault</div>
@@ -124,7 +143,7 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* Sidebar Mobile */}
+      {/* Mobile Sidebar */}
       <aside className="sidebar mobile">
         <SidebarLink href="/home" label="🏠" />
         <SidebarLink href="/favorites" label="❤️" />
@@ -154,29 +173,14 @@ export default function Sidebar() {
   }
 }
 
-function SidebarLink({
-  href,
-  label,
-}: {
-  href: string;
-  label: string;
-}) {
+function SidebarLink({ href, label }: { href: string; label: string }) {
+  const pathname = usePathname();
+  const isActive = pathname === href;
+
   return (
     <Link
       href={href}
-      style={{
-        color: '#fff',
-        textDecoration: 'none',
-        padding: '8px 12px',
-        borderRadius: '8px',
-        fontWeight: 500,
-        fontSize: '16px',
-        backgroundColor: 'transparent',
-        transition: 'all 0.3s ease',
-        textShadow: '0 0 6px rgba(255, 255, 255, 0.3)',
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = '#1db95420')}
-      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+      className={`sidebar-link${isActive ? ' active' : ''}`}
     >
       {label}
     </Link>

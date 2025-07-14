@@ -30,7 +30,8 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [popularArtists, setPopularArtists] = useState<Artist[]>([]);
   const [username, setUsername] = useState<string | null>(null);
-  const trendingRef = useRef<HTMLDivElement>(null);
+  const trendingRef = useRef<HTMLDivElement | null>(null);
+  const artistRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -47,7 +48,7 @@ export default function HomePage() {
     try {
       const data: Song[] = await getSongs();
       setSongs(data);
-      const topArtists = getTopArtists(data, 6);
+      const topArtists = getTopArtists(data, 10);
       setPopularArtists(topArtists);
     } catch (err) {
       console.error('Gagal ambil lagu:', err);
@@ -75,9 +76,9 @@ export default function HomePage() {
       song.genre?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const scroll = (direction: 'left' | 'right') => {
-    if (trendingRef.current) {
-      trendingRef.current.scrollBy({
+  const scroll = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
+    if (ref.current) {
+      ref.current.scrollBy({
         left: direction === 'right' ? 300 : -300,
         behavior: 'smooth',
       });
@@ -102,7 +103,7 @@ export default function HomePage() {
       <main style={mainStyle}>
         <h2 style={sectionTitle}>🔥 Trending Songs</h2>
         <div style={scrollWrapper}>
-          <button onClick={() => scroll('left')} style={scrollBtn}>⬅</button>
+          <button onClick={() => scroll(trendingRef, 'left')} style={scrollBtn}>⬅</button>
           <div ref={trendingRef} style={scrollContainer}>
             {filteredSongs.map((song) => (
               <div key={song.id} style={{ flex: '0 0 auto' }}>
@@ -110,29 +111,33 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-          <button onClick={() => scroll('right')} style={scrollBtn}>➡</button>
+          <button onClick={() => scroll(trendingRef, 'right')} style={scrollBtn}>➡</button>
         </div>
 
         <div style={{ marginTop: '32px' }}>
           <h2 style={sectionTitle}>🎤 Popular Artists</h2>
-          <div style={popularWrapper}>
-            {popularArtists.map((artist, index) => (
-              <div
-                key={index}
-                style={popularItem}
-                onClick={() => setSearchTerm(artist.name)}
-              >
-                <Image
-                  src={artist.image || '/default-artist.png'}
-                  alt={artist.name}
-                  width={120}
-                  height={120}
-                  style={popularImage}
-                  unoptimized
-                />
-                <span style={artistName}>{artist.name}</span>
-              </div>
-            ))}
+          <div style={scrollWrapper}>
+            <button onClick={() => scroll(artistRef, 'left')} style={scrollBtn}>⬅</button>
+            <div ref={artistRef} style={scrollContainer}>
+              {popularArtists.map((artist, index) => (
+                <div
+                  key={index}
+                  style={artistCardStyle}
+                  onClick={() => setSearchTerm(artist.name)}
+                >
+                  <Image
+                    src={artist.image || '/default-artist.png'}
+                    alt={artist.name}
+                    width={120}
+                    height={120}
+                    style={artistImageStyle}
+                    unoptimized
+                  />
+                  <p style={artistName}>{artist.name}</p>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => scroll(artistRef, 'right')} style={scrollBtn}>➡</button>
           </div>
         </div>
       </main>
@@ -213,31 +218,23 @@ const scrollBtn: React.CSSProperties = {
   flex: '0 0 auto',
 };
 
-const popularWrapper: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  gap: '24px',
-  flexWrap: 'wrap',
-};
-
-const popularItem: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
+const artistCardStyle: React.CSSProperties = {
+  minWidth: '120px',
   cursor: 'pointer',
+  textAlign: 'center',
 };
 
-const popularImage: React.CSSProperties = {
-  borderRadius: '50%',
+const artistImageStyle: React.CSSProperties = {
+  width: '120px',
+  height: '120px',
+  borderRadius: '12px',
   objectFit: 'cover',
-  boxShadow: '0 0 12px rgba(255, 0, 128, 0.4)',
-  marginBottom: '10px',
+  boxShadow: '0 0 12px rgba(0,255,255,0.3)',
 };
 
 const artistName: React.CSSProperties = {
+  marginTop: '8px',
   fontSize: '14px',
-  color: '#eee',
-  textAlign: 'center',
   fontWeight: 'bold',
+  color: '#fff',
 };

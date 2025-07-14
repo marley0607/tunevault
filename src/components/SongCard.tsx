@@ -24,7 +24,6 @@ export default function SongCard({ song }: { song: Song }) {
 
   const toggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation(); // agar tidak masuk detail saat klik love
-
     let currentFavorites: string[] = JSON.parse(sessionStorage.getItem('favorites') || '[]');
 
     if (isFavorite) {
@@ -45,19 +44,20 @@ export default function SongCard({ song }: { song: Song }) {
     <Card
       onClick={goToDetail}
       sx={{
-        width: { xs: '100%', sm: 200, md: 220 },
+        width: { xs: 140, sm: 160, md: 180 },
         background: '#1e1e1e',
         color: 'white',
         borderRadius: '16px',
-        boxShadow: '0 0 10px rgba(255, 0, 128, 0.3)',
+        boxShadow: '0 0 12px rgba(0, 255, 128, 0.15)',
         overflow: 'hidden',
         cursor: 'pointer',
-        transition: '0.3s',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          transform: 'translateY(-6px)',
+          boxShadow: '0 0 18px rgba(0,255,128,0.5)',
+        },
         display: 'flex',
         flexDirection: 'column',
-        '&:hover': {
-          transform: 'translateY(-5px)',
-        },
       }}
     >
       <CardMedia
@@ -69,30 +69,40 @@ export default function SongCard({ song }: { song: Song }) {
           objectFit: 'cover',
         }}
       />
-      <CardContent sx={{ padding: 2 }}>
-        <Typography variant="subtitle1" fontWeight="bold" sx={{ whiteSpace: 'normal' }}>
+      <CardContent sx={{ padding: 1.5 }}>
+        <Typography
+          variant="subtitle1"
+          fontWeight="bold"
+          noWrap
+          sx={{ fontSize: '0.95rem' }}
+        >
           {song.title}
         </Typography>
-        <Typography variant="body2" sx={{ color: '#ff80ab', whiteSpace: 'normal' }}>
+        <Typography
+          variant="body2"
+          sx={{ color: '#66ffcc', fontSize: '0.85rem' }}
+          noWrap
+        >
           {song.artist}
         </Typography>
         <Typography
           variant="caption"
-          sx={{ color: 'gray', fontStyle: 'italic' }}
+          sx={{ color: 'gray', fontSize: '0.7rem', fontStyle: 'italic' }}
+          noWrap
         >
           Genre: {song.genre || song.mood || 'Unknown'}
         </Typography>
 
         <Box
           sx={{
-            marginTop: 2,
+            marginTop: 1.5,
             display: 'flex',
             justifyContent: 'flex-end',
             alignItems: 'center',
           }}
         >
-          <IconButton onClick={toggleFavorite}>
-            <FavoriteIcon sx={{ color: isFavorite ? '#ff4081' : 'gray' }} />
+          <IconButton onClick={toggleFavorite} sx={{ padding: '4px' }}>
+            <FavoriteIcon sx={{ fontSize: '20px', color: isFavorite ? '#ff4081' : 'gray' }} />
           </IconButton>
         </Box>
       </CardContent>
