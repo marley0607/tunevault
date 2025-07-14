@@ -78,17 +78,15 @@ export default function FavoritesPage() {
           <div style={songListStyle}>
             {favorites.map((song) => (
               <div key={song.id} style={songCardStyle}>
-                <div style={{ position: 'relative' }}>
-                  <Image
-                    src={song.image || '/default-artist.png'}
-                    alt={song.title}
-                    width={180}
-                    height={180}
-                    style={songImageStyle}
-                    onClick={() => goToDetail(song.id)}
-                  />
-                  <div style={overlayPlay} onClick={() => goToDetail(song.id)}>▶</div>
-                </div>
+                <Image
+                  src={song.image || '/default-song.png'}
+                  alt={song.title}
+                  width={200}
+                  height={200}
+                  style={songImageStyle}
+                  onClick={() => goToDetail(song.id)}
+                  unoptimized // jika kamu pakai URL luar
+                />
                 <div style={{ marginTop: '12px', textAlign: 'center' }}>
                   <h3 style={songTitleStyle}>{song.title}</h3>
                   <p style={songDetailStyle}>{song.artist} · {song.genre}</p>
@@ -122,8 +120,8 @@ const songCardStyle: React.CSSProperties = {
   borderRadius: '14px',
   padding: '16px',
   width: '100%',
-  maxWidth: '200px',
-  boxShadow: '0 0 10px rgba(0,255,128,0.2)',
+  maxWidth: '220px',
+  boxShadow: '0 0 12px rgba(255, 0, 128, 0.2)',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -133,7 +131,9 @@ const songCardStyle: React.CSSProperties = {
 const songImageStyle: React.CSSProperties = {
   borderRadius: '10px',
   cursor: 'pointer',
-  transition: 'transform 0.2s ease',
+  objectFit: 'cover',
+  width: '200px',
+  height: '200px',
 };
 
 const songTitleStyle: React.CSSProperties = {
@@ -158,22 +158,4 @@ const removeBtnStyle: React.CSSProperties = {
   backgroundColor: '#d32f2f',
   cursor: 'pointer',
   transition: 'background 0.3s ease',
-};
-
-const overlayPlay: React.CSSProperties = {
-  position: 'absolute',
-  bottom: '10px',
-  right: '10px',
-  backgroundColor: '#1db954',
-  borderRadius: '50%',
-  width: '32px',
-  height: '32px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: '#fff',
-  fontWeight: 'bold',
-  fontSize: '14px',
-  cursor: 'pointer',
-  boxShadow: '0 0 6px rgba(0,0,0,0.3)',
 };

@@ -1,27 +1,29 @@
-// src/app/layout.tsx
+'use client';
+
 import './globals.css';
 import { ReactNode } from 'react';
 import Sidebar from '@/components/Sidebar';
-
-export const metadata = {
-  title: 'TuneVault',
-  description: 'Temukan dan simpan musik favoritmu!',
-  icons: {
-    icon: 'public/logo.png', // ✅ relatif dari public/
-  },
-};
-
+import { usePathname } from 'next/navigation';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
+  const isLoginPage = pathname === '/' || pathname === '/login';
+
   return (
     <html lang="en">
       <head>
+        <title>TuneVault</title>
+        <meta name="description" content="Temukan dan simpan musik favoritmu!" />
+        <link rel="icon" href="/logo.png" />
         <style>{`
           body {
             margin: 0;
             height: 100vh;
             overflow: hidden;
-            font-family: sans-serif;
+            font-family: 'Segoe UI', sans-serif;
+            background: #121212;
+            color: #fff;
           }
 
           .layout-container {
@@ -37,7 +39,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             display: flex;
             flex-direction: column;
             background: #121212;
-            color: #fff;
           }
 
           @media (max-width: 768px) {
@@ -46,15 +47,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             }
 
             .main-content {
-              flex: none;
-              height: calc(100vh - 60px); /* Sisakan space jika sidebar diposisikan atas */
+              height: calc(100vh - 60px);
             }
           }
         `}</style>
       </head>
       <body>
         <div className="layout-container">
-          <Sidebar />
+          {!isLoginPage && <Sidebar />}
           <div className="main-content">
             {children}
           </div>
