@@ -52,13 +52,10 @@ export default function Sidebar() {
           align-items: center;
           width: 100%;
           height: 60px;
-          position: fixed;
-          bottom: 0;
-          left: 0;
-          background: rgba(28, 28, 28, 0.7);
-          backdrop-filter: blur(10px);
+          position: relative; /* changed from fixed */
           border-top: 1px solid #333;
           box-shadow: 0 0 8px rgba(0, 255, 128, 0.2);
+          margin-top: 16px;
         }
 
         .logo {
@@ -143,7 +140,7 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* Mobile Sidebar */}
+      {/* Mobile Sidebar - Menyatu di bawah konten */}
       <aside className="sidebar mobile">
         <SidebarLink href="/home" label="🏠" />
         <SidebarLink href="/favorites" label="❤️" />

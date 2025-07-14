@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSongs } from '@/utils/api';
 import SongCard from '@/components/SongCard';
 import Image from 'next/image';
+import Sidebar from '@/components/Sidebar'; // Pastikan Sidebar dipanggil di Home
 
 interface Song {
   id: string;
@@ -30,8 +31,6 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [popularArtists, setPopularArtists] = useState<Artist[]>([]);
   const [username, setUsername] = useState<string | null>(null);
-  const trendingRef = useRef<HTMLDivElement | null>(null);
-  const artistRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -76,83 +75,102 @@ export default function HomePage() {
       song.genre?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const scroll = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
-    if (ref.current) {
-      ref.current.scrollBy({
-        left: direction === 'right' ? 300 : -300,
-        behavior: 'smooth',
-      });
-    }
-  };
-
   return (
-    <div style={containerStyle}>
-      {/* Header */}
-      <header style={headerStyle}>
-        <input
-          type="text"
-          placeholder="Cari lagu, artis, genre..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={searchInput}
-        />
-        <div style={{ fontSize: '16px' }}>Welcome, {username}</div>
-      </header>
+    <div style={pageWrapper}>
+      <Sidebar />
 
-      {/* Main Content */}
-      <main style={mainStyle}>
-        <h2 style={sectionTitle}>🔥 Trending Songs</h2>
-        <div style={scrollWrapper}>
-          <button onClick={() => scroll(trendingRef, 'left')} style={scrollBtn}>⬅</button>
-          <div ref={trendingRef} style={scrollContainer}>
-            {filteredSongs.map((song) => (
-              <div key={song.id} style={{ flex: '0 0 auto' }}>
-                <SongCard song={song} />
-              </div>
-            ))}
-          </div>
-          <button onClick={() => scroll(trendingRef, 'right')} style={scrollBtn}>➡</button>
-        </div>
+      <div style={containerStyle}>
+        <style>{`
+          @media (max-width: 768px) {
+            .scroll-container {
+              gap: 12px !important;
+            }
 
-        <div style={{ marginTop: '32px' }}>
-          <h2 style={sectionTitle}>🎤 Popular Artists</h2>
+            .artist-card img {
+              width: 90px !important;
+              height: 90px !important;
+            }
+
+            .artist-card p {
+              font-size: 13px !important;
+            }
+
+            .song-card {
+              min-width: 160px !important;
+            }
+          }
+        `}</style>
+
+        {/* Header */}
+        <header style={headerStyle}>
+          <input
+            type="text"
+            placeholder="Cari lagu, artis, genre..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={searchInput}
+          />
+          <div style={{ fontSize: '16px' }}>Welcome, {username}</div>
+        </header>
+
+        {/* Main Content */}
+        <main style={mainStyle}>
+          <h2 style={sectionTitle}>🔥 Trending Songs</h2>
           <div style={scrollWrapper}>
-            <button onClick={() => scroll(artistRef, 'left')} style={scrollBtn}>⬅</button>
-            <div ref={artistRef} style={scrollContainer}>
-              {popularArtists.map((artist, index) => (
-                <div
-                  key={index}
-                  style={artistCardStyle}
-                  onClick={() => setSearchTerm(artist.name)}
-                >
-                  <Image
-                    src={artist.image || '/default-artist.png'}
-                    alt={artist.name}
-                    width={120}
-                    height={120}
-                    style={artistImageStyle}
-                    unoptimized
-                  />
-                  <p style={artistName}>{artist.name}</p>
+            <div style={scrollContainer} className="scroll-container">
+              {filteredSongs.map((song) => (
+                <div key={song.id} style={{ flex: '0 0 auto', minWidth: '200px' }} className="song-card">
+                  <SongCard song={song} />
                 </div>
               ))}
             </div>
-            <button onClick={() => scroll(artistRef, 'right')} style={scrollBtn}>➡</button>
           </div>
-        </div>
-      </main>
+
+          <div style={{ marginTop: '32px' }}>
+            <h2 style={sectionTitle}>🎤 Popular Artists</h2>
+            <div style={scrollWrapper}>
+              <div style={scrollContainer} className="scroll-container">
+                {popularArtists.map((artist, index) => (
+                  <div
+                    key={index}
+                    style={artistCardStyle}
+                    onClick={() => setSearchTerm(artist.name)}
+                    className="artist-card"
+                  >
+                    <Image
+                      src={artist.image || '/default-artist.png'}
+                      alt={artist.name}
+                      width={120}
+                      height={120}
+                      style={artistImageStyle}
+                      unoptimized
+                    />
+                    <p style={artistName}>{artist.name}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
 
 // ===== STYLE =====
+const pageWrapper: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  minHeight: '100vh',
+};
+
 const containerStyle: React.CSSProperties = {
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
   background: '#121212',
   color: '#fff',
-  height: '100vh',
+  paddingBottom: '70px', // Tambahan supaya tidak ketutup sidebar mobile
 };
 
 const headerStyle: React.CSSProperties = {
@@ -190,32 +208,17 @@ const sectionTitle: React.CSSProperties = {
 };
 
 const scrollWrapper: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '12px',
-  flexWrap: 'nowrap',
+  width: '100%',
   overflowX: 'auto',
 };
 
 const scrollContainer: React.CSSProperties = {
   display: 'flex',
   gap: '20px',
-  overflowX: 'auto',
   padding: '10px 0',
+  overflowX: 'auto',
   scrollbarColor: '#222 #111',
   scrollbarWidth: 'thin',
-};
-
-const scrollBtn: React.CSSProperties = {
-  fontSize: '20px',
-  background: '#333',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '50%',
-  width: '40px',
-  height: '40px',
-  cursor: 'pointer',
-  flex: '0 0 auto',
 };
 
 const artistCardStyle: React.CSSProperties = {
