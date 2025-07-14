@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { getSongs } from '@/utils/api';
 import SongCard from '@/components/SongCard';
 import Image from 'next/image';
-import Sidebar from '@/components/Sidebar'; // Pastikan Sidebar dipanggil di Home
 
 interface Song {
   id: string;
@@ -77,7 +76,6 @@ export default function HomePage() {
 
   return (
     <div style={pageWrapper}>
-      <Sidebar />
 
       <div style={containerStyle}>
         <style>{`
@@ -170,7 +168,7 @@ const containerStyle: React.CSSProperties = {
   flexDirection: 'column',
   background: '#121212',
   color: '#fff',
-  paddingBottom: '70px', // Tambahan supaya tidak ketutup sidebar mobile
+  paddingBottom: '80px', 
 };
 
 const headerStyle: React.CSSProperties = {
